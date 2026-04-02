@@ -40,19 +40,25 @@ export function resolveOutboundMediaAccess(
     mediaReadFile?: OutboundMediaReadFile;
   } = {},
 ): OutboundMediaAccess | undefined {
-  const localRoots = resolveOutboundMediaLocalRoots(
-    params.mediaAccess?.localRoots ?? params.mediaLocalRoots,
-  );
-  const readFile = params.mediaAccess?.readFile ?? params.mediaReadFile;
-  const workspaceDir = params.mediaAccess?.workspaceDir;
+  const ma = params.mediaAccess;
+  const rootsCandidate = ma?.localRoots ?? params.mediaLocalRoots;
+  let localRoots: readonly string[] | undefined;
+  if (rootsCandidate && rootsCandidate.length > 0) {
+    localRoots = rootsCandidate;
+  }
+
+  const readFile = ma?.readFile ?? params.mediaReadFile;
+  const workspaceDir = ma?.workspaceDir;
+
   if (!localRoots && !readFile && !workspaceDir) {
     return undefined;
   }
-  return {
-    ...(localRoots ? { localRoots } : {}),
-    ...(readFile ? { readFile } : {}),
-    ...(workspaceDir ? { workspaceDir } : {}),
-  };
+
+  const out: OutboundMediaAccess = {};
+  if (localRoots) out.localRoots = localRoots;
+  if (readFile) out.readFile = readFile;
+  if (workspaceDir) out.workspaceDir = workspaceDir;
+  return out;
 }
 
 export function buildOutboundMediaLoadOptions(
