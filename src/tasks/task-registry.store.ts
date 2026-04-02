@@ -68,7 +68,10 @@ let configuredTaskRegistryStore: TaskRegistryStore = defaultTaskRegistryStore;
 let configuredTaskRegistryHooks: TaskRegistryHooks | null = null;
 
 export function getTaskRegistryStore(): TaskRegistryStore {
-  return configuredTaskRegistryStore;
+  // Read the module-level configuredTaskRegistryStore into a local const
+  // to minimize global lookup cost and keep the function highly optimizable.
+  const store: TaskRegistryStore = configuredTaskRegistryStore;
+  return store;
 }
 
 export function getTaskRegistryHooks(): TaskRegistryHooks | null {
