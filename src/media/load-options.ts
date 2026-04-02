@@ -30,7 +30,9 @@ export type OutboundMediaLoadOptions = {
 export function resolveOutboundMediaLocalRoots(
   mediaLocalRoots?: readonly string[],
 ): readonly string[] | undefined {
-  return mediaLocalRoots && mediaLocalRoots.length > 0 ? mediaLocalRoots : undefined;
+  if (!mediaLocalRoots) return undefined;
+  const len = mediaLocalRoots.length;
+  return len === 0 ? undefined : mediaLocalRoots;
 }
 
 export function resolveOutboundMediaAccess(
