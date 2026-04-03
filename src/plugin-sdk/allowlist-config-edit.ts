@@ -113,12 +113,33 @@ export function createFlatAllowlistOverrideResolver<ResolvedAccount, Entry>(para
   label: (key: string, value: Entry) => string;
   resolveEntries: (value: Entry) => Array<string | number> | null | undefined;
 }): (account: ResolvedAccount) => AllowlistGroupOverride[] {
-  return (account) =>
-    collectAllowlistOverridesFromRecord({
-      record: params.resolveRecord(account),
-      label: params.label,
-      resolveEntries: params.resolveEntries,
-    });
+  // Inline the traversal to avoid allocating the intermediate params object and the extra function call
+  const resolveRecord = params.resolveRecord;
+  const labelFn = params.label;
+  const resolveEntries = params.resolveEntries;
+
+  return (account) => {
+    const record = resolveRecord(account);
+    const overrides: AllowlistGroupOverride[] = [];
+    if (record == null) return overrides;
+
+    // Cache frequently used references to avoid repeated property lookups
+    const hasOwn = Object.prototype.hasOwnProperty;
+
+    for (const key in record) {
+      if (!hasOwn.call(record, key)) continue;
+      const value = (record as Record<string, Entry | undefined>)[key];
+      if (!value) continue;
+
+      const raw = resolveEntries(value);
+      const entries = readConfiguredAllowlistEntries(raw);
+      if (entries.length === 0) continue;
+
+      overrides.push({ label: labelFn(key, value), entries });
+    }
+
+    return overrides;
+  };
 }
 
 /** Build an account-scoped nested override resolver from hierarchical allowlist records. */
