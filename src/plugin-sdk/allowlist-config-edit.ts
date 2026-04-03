@@ -130,14 +130,15 @@ export function createNestedAllowlistOverrideResolver<ResolvedAccount, Outer, In
   innerLabel: (outerKey: string, innerKey: string, inner: Inner) => string;
   resolveInnerEntries: (value: Inner) => Array<string | number> | null | undefined;
 }): (account: ResolvedAccount) => AllowlistGroupOverride[] {
+  const { resolveRecord, outerLabel, resolveOuterEntries, resolveChildren, innerLabel, resolveInnerEntries } = params;
   return (account) =>
     collectNestedAllowlistOverridesFromRecord({
-      record: params.resolveRecord(account),
-      outerLabel: params.outerLabel,
-      resolveOuterEntries: params.resolveOuterEntries,
-      resolveChildren: params.resolveChildren,
-      innerLabel: params.innerLabel,
-      resolveInnerEntries: params.resolveInnerEntries,
+      record: resolveRecord(account),
+      outerLabel,
+      resolveOuterEntries,
+      resolveChildren,
+      innerLabel,
+      resolveInnerEntries,
     });
 }
 
