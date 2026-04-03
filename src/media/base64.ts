@@ -2,13 +2,20 @@ export function estimateBase64DecodedBytes(base64: string): number {
   // Avoid `trim()`/`replace()` here: they allocate a second (potentially huge) string.
   // We only need a conservative decoded-size estimate to enforce budgets before Buffer.from(..., "base64").
   let effectiveLen = 0;
-  for (let i = 0; i < base64.length; i += 1) {
+  const len = base64.length;
+
+  // Track the last and previous non-whitespace indices in a single pass to avoid a second backward scan.
+  let end = -1;
+  let prev = -1;
+  for (let i = 0; i < len; i += 1) {
     const code = base64.charCodeAt(i);
     // Treat ASCII control + space as whitespace; base64 decoders commonly ignore these.
     if (code <= 0x20) {
       continue;
     }
     effectiveLen += 1;
+    prev = end;
+    end = i;
   }
 
   if (effectiveLen === 0) {
@@ -17,17 +24,9 @@ export function estimateBase64DecodedBytes(base64: string): number {
 
   let padding = 0;
   // Find last non-whitespace char(s) to detect '=' padding without allocating/copying.
-  let end = base64.length - 1;
-  while (end >= 0 && base64.charCodeAt(end) <= 0x20) {
-    end -= 1;
-  }
   if (end >= 0 && base64[end] === "=") {
     padding = 1;
-    end -= 1;
-    while (end >= 0 && base64.charCodeAt(end) <= 0x20) {
-      end -= 1;
-    }
-    if (end >= 0 && base64[end] === "=") {
+    if (prev >= 0 && base64[prev] === "=") {
       padding = 2;
     }
   }
