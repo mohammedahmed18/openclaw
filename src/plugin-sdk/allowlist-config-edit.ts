@@ -44,7 +44,12 @@ const LEGACY_DM_ALLOWLIST_CONFIG_PATHS: AllowlistConfigPaths = {
 };
 
 export function resolveDmGroupAllowlistConfigPaths(scope: "dm" | "group") {
-  return scope === "dm" ? DM_ALLOWLIST_CONFIG_PATHS : GROUP_ALLOWLIST_CONFIG_PATHS;
+  // keep fast-path for the common "dm" case but preserve strict equality semantics:
+  // do not coerce non-string inputs that stringify to "dm".
+  if (scope === "dm") {
+    return DM_ALLOWLIST_CONFIG_PATHS;
+  }
+  return GROUP_ALLOWLIST_CONFIG_PATHS;
 }
 
 export function resolveLegacyDmAllowlistConfigPaths(scope: "dm" | "group") {
