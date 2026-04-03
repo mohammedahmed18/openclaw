@@ -86,23 +86,30 @@ export async function listPinsFeishu(params: {
   }
 
   const client = createFeishuClient(account);
+
+  const pageSizeNormalized =
+    typeof params.pageSize === "number"
+      ? Math.max(1, Math.min(100, Math.floor(params.pageSize)))
+      : undefined;
+
+  const requestParams: Record<string, unknown> = { chat_id: params.chatId };
+  if (params.startTime) requestParams.start_time = params.startTime;
+  if (params.endTime) requestParams.end_time = params.endTime;
+  if (pageSizeNormalized !== undefined) requestParams.page_size = pageSizeNormalized;
+  if (params.pageToken) requestParams.page_token = params.pageToken;
+
   const response = await client.im.pin.list({
-    params: {
-      chat_id: params.chatId,
-      ...(params.startTime ? { start_time: params.startTime } : {}),
-      ...(params.endTime ? { end_time: params.endTime } : {}),
-      ...(typeof params.pageSize === "number"
-        ? { page_size: Math.max(1, Math.min(100, Math.floor(params.pageSize))) }
-        : {}),
-      ...(params.pageToken ? { page_token: params.pageToken } : {}),
-    },
+    params: requestParams,
   });
   assertFeishuPinApiSuccess(response, "pin list");
 
+  const data = response.data ?? {};
+  const items = data.items ?? [];
+
   return {
     chatId: params.chatId,
-    pins: (response.data?.items ?? []).map(normalizePin),
-    hasMore: response.data?.has_more === true,
-    pageToken: response.data?.page_token,
+    pins: items.map(normalizePin),
+    hasMore: data.has_more === true,
+    pageToken: data.page_token,
   };
 }
