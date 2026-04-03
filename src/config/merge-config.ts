@@ -10,16 +10,25 @@ export function mergeConfigSection<T extends Record<string, unknown>>(
   patch: Partial<T>,
   options: MergeSectionOptions<T> = {},
 ): T {
-  const next: Record<string, unknown> = { ...(base ?? undefined) };
-  for (const [key, value] of Object.entries(patch) as [keyof T, T[keyof T]][]) {
+  const next: Record<string, unknown> = base ? Object.assign({}, base) : {};
+  const unsetSet: Set<keyof T> | undefined = options.unsetOnUndefined
+    ? new Set(options.unsetOnUndefined as Array<keyof T>)
+    : undefined;
+
+  for (const key in patch) {
+    if (!Object.prototype.hasOwnProperty.call(patch, key)) continue;
+    const value = (patch as any)[key] as T[keyof T];
+
     if (value === undefined) {
-      if (options.unsetOnUndefined?.includes(key)) {
-        delete next[key as string];
+      if (unsetSet && unsetSet.has(key as keyof T)) {
+        delete next[key];
       }
       continue;
     }
-    next[key as string] = value as unknown;
+
+    next[key] = value as unknown;
   }
+
   return next as T;
 }
 
